@@ -1,3 +1,65 @@
+
+
+hey hey y'all
+
+1. have issues tab so I don't have to do this
+
+2. can you please give us a better way to determine if the connection is opened/closed other than polling?
+
+Online I can only see polling options to determine if connection is alive, what you should be able to do instead is
+as soon as their is a serious transissions failure, flip a boolean
+
+This is EXARCEBATED by the fact we can get just tag objects in Golang with an extra field "closed"** we would have to wrap it which sucks
+
+
+package main
+
+import (
+    "context"
+    "fmt"
+    "log"
+    "time"
+
+    "go.mongodb.org/mongo-driver/mongo"
+    "go.mongodb.org/mongo-driver/mongo/options"
+)
+
+func main() {
+   
+    clientOptions := options.Client().ApplyURI("your_mongodb_uri")
+    client, err := mongo.Connect(context.TODO(), clientOptions)
+    err = client.Ping(context.TODO(), nil)
+
+    go func() {
+        for {
+            err := client.Ping(context.Background(), nil)
+            if err != nil {
+                 client.Closed = true //// NOT HAPPENDING
+                fmt.Println("Connection to MongoDB lost!")
+                break
+            }
+            time.Sleep(10 * time.Second) // Adjust the duration according to your needs
+        }
+    }()
+
+    err = client.Disconnect(context.TODO())
+    fmt.Println("Connection to MongoDB closed.")
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/golang/snappy v0.0.1 h1:Qgr9rKW7uDUkrbSmQeiDsGa8SjGyCOGtuasMWwvp2P4=
